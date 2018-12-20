@@ -2,7 +2,7 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
@@ -16,6 +16,10 @@ from models import *
 
 app = Flask(__name__)
 app.config.from_object('config')
+sorted_bids={}
+@app.route('/index')
+def index():
+    pass
 
 @app.route('/')
 def home():
@@ -34,8 +38,6 @@ def login():
 
     return render_template('forms/login.html')    
 
-
-
 @app.route('/register')
 def register():
     form = RegisterForm(request.form)
@@ -44,12 +46,22 @@ def register():
 
 @app.route('/get_flight_details',methods=['POST','GET'])
 def get_flight_details():
-    
-    return render_template('forms/forgot.html', form=form)
+    if request.method == 'POST':
+        session['name'] = request.form['name']
+        flight = mongo.db.flights
+        if request.form['reference'][0:2] =='EK':
+            flight_to_bid=flight.find_one({'airline':'Emirates'})
+            return redirect(url_for('bidding',flight_to_bid=flight_to_bid))
+
+    return render_template('forms/details.html')
+
+@app.route('/bidding/<flight_to_bid>',methods=['POST','GET'])
+def bidding(flight_to_bid):
+    if request.method =='POST':
+        bid_amount = request.form['bid-amount']
+        return render_template('form/bidding_page.html',flight_to_bid = flight_to_bid)
 
 # Error handlers.
-
-
 @app.errorhandler(500)
 def internal_error(error):
     #db_session.rollback()
