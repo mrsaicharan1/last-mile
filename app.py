@@ -2,7 +2,7 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
@@ -47,19 +47,28 @@ def register():
 @app.route('/get_flight_details',methods=['POST','GET'])
 def get_flight_details():
     if request.method == 'POST':
-        session['name'] = request.form['name']
-        flight = mongo.db.flights
-        if request.form['reference'][0:2] =='EK':
-            flight_to_bid=flight.find_one({'airline':'Emirates'})
-            return redirect(url_for('bidding',flight_to_bid=flight_to_bid))
+        session['reference'] = request.form['reference']
+        flights = mongo.db.flights
+        airlines = mongo.db.airlines
+        confirmed_info = mongo.db.confirmed_tickets
+        for confirmed in confirmed_info.find():
+            print(confirmed['reference'])
+            if request.form['reference'] == confirmed['reference']:
+                print(request.form['reference'])
+                print(confirmed['reference'])
+                flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
+                print(flight_to_bid)
+                return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid)
+    else:   
+        return render_template('forms/details.html')
+        # if request.form['reference'][0:2] =='EK':
+        #     flight_to_bid=flights.find_one({'airline':'Emirates'})
+        #     return redirect(url_for('bidding',flight_to_bid=flight_to_bid))
 
-    return render_template('forms/details.html')
 
-@app.route('/bidding/<flight_to_bid>',methods=['POST','GET'])
-def bidding(flight_to_bid):
-    if request.method =='POST':
-        bid_amount = request.form['bid-amount']
-        return render_template('form/bidding_page.html',flight_to_bid = flight_to_bid)
+@app.route('/bidding',methods=['POST','GET'])
+def bidding():
+        return render_template('forms/bidding_page.html',flight_to_bid = session.get('flight_to_bid'))
 
 # Error handlers.
 @app.errorhandler(500)

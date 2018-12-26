@@ -7,3 +7,9 @@ app.config['MONGO_DBNAME'] = 'last-mile'
 app.config['MONGO_URI'] = 'mongodb://lastmile:lastmile1@ds139534.mlab.com:39534/last-mile'
 
 mongo = PyMongo(app)
+
+# Schema definitions below
+
+#  Collection : airlines(company_name,flight_initials,hub) 
+#  Collection : flights(company_name,flight,hub)
+
