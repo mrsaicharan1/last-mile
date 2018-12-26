@@ -12,4 +12,5 @@ mongo = PyMongo(app)
 
 #  Collection : airlines(company_name,flight_initials,hub) 
 #  Collection : flights(company_name,flight,hub)
+#  Collection : confirmed(first-name,last-name, reference, class)
 

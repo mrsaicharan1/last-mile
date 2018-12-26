@@ -27,6 +27,22 @@
 </head>
 
 <body>
+    			<!-- flash -->
+			<div class="container-fluid" style="min-height:100%">
+                    {% with messages = get_flashed_messages() %}
+                      {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                          {{ message }}
+                        </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                  <!--//flash-->	
     <div class="page-wrapper bg-gra-01 p-t-180 p-b-100 font-poppins">
         <div class="wrapper wrapper--w780">
             <div class="card card-3">

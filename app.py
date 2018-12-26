@@ -2,7 +2,8 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, flash
+import bcrypt
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
@@ -21,28 +22,61 @@ sorted_bids={}
 def index():
     pass
 
+@app.route('/signup',methods=['POST','GET'])
+def signup():
+     # store hashed password and credentials for POST request
+    if request.method == 'POST': # if data is being POSTed
+        users = mongo.db.users
+        for user in users.find(): # looping through the users
+            if user['username'] == request.form['username']:# check if the entered username matches to avoid collisions
+                flash('Username already exists. Please pick another one')
+                return redirect(url_for('signup'))
+
+            elif len(request.form['password'])<8: # password length check
+                flash('Please provide a password which is atleast 8 characters long')
+                return redirect(url_for('signup'))
+
+            elif request.form['password']!=request.form['repeat_password']: # check passwords match
+                flash('Passwords mismatch. Please try again')
+                return redirect(url_for('signup'))
+ # if no exception, go here
+        hashed_password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt(10)) # hashing the password with a salt
+        users.insert({'email':request.form['email'],'username':request.form['username'],'password':hashed_password.decode('utf-8')})# storing the hashed password in the collection
+
+        flash('Signup Success!') # flash messages
+        return redirect(url_for('signin'))
+    # render form for GET
+    return render_template('forms/signup.html')
+
+
+@app.route('/signin',methods=['POST','GET'])
+def signin():
+     # check if hashes match and set session variables
+    if request.method == 'POST':
+        users = mongo.db.users
+        user = users.find_one({'username':request.form['username']})
+        if bcrypt.hashpw(request.form['password'].encode('utf-8'),user['password'].encode('utf-8')) == user['password'].encode('utf-8'):
+            session['username'] = request.form['username']
+            return redirect(url_for('get_flight_details'))
+        else:
+            flash('Incorrect Credentials Entered')
+            return redirect(url_for('signin'))
+    return render_template('forms/signin.html')
+
 @app.route('/')
 def home():
     return render_template('pages/index.html')
+@app.route('/forgot')
+def forgot():
+   pass
 
+@app.route('/register')
+def register():
+   pass
 
 @app.route('/about')
 def about():
     return render_template('pages/placeholder.about.html')
-
-
-@app.route('/login',methods=['POST','GET'])
-def login():
-    if request.method == 'POST':
-        pass
-
-    return render_template('forms/login.html')    
-
-@app.route('/register')
-def register():
-    form = RegisterForm(request.form)
-    return render_template('forms/register.html', form=form)
-
 
 @app.route('/get_flight_details',methods=['POST','GET'])
 def get_flight_details():
@@ -65,11 +99,11 @@ def get_flight_details():
         #     flight_to_bid=flights.find_one({'airline':'Emirates'})
         #     return redirect(url_for('bidding',flight_to_bid=flight_to_bid))
 
+@app.route('/bid_amount')
+def bid_amount():
+    pass
 
-@app.route('/bidding',methods=['POST','GET'])
-def bidding():
-        return render_template('forms/bidding_page.html',flight_to_bid = session.get('flight_to_bid'))
-
+    
 # Error handlers.
 @app.errorhandler(500)
 def internal_error(error):
