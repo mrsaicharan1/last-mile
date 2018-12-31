@@ -12,6 +12,7 @@ import os
 from models import *
 import redis    
 import operator
+import pickle
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -19,7 +20,6 @@ import operator
 app = Flask(__name__)
 app.config.from_object('config')
 sorted_bids={}
-db = redis.Redis('localhost')
 top_bids = {}
 
 @app.route('/index')
@@ -98,7 +98,9 @@ def get_flight_details():
                 print(confirmed['reference'])
                 flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
                 print(flight_to_bid)
-                top_bids = db.hgetall('bidding_logic')
+                read_top_bids = open('top_bids.pickle','rb')
+                top_bids = pickle.load(read_top_bids)
+                read_top_bids.close()
                 return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid,top_bids=top_bids)
             else:
                 flash('Could not find a booking pertaining to the entered reference number')
@@ -111,14 +113,20 @@ def get_flight_details():
 @app.route('/bidding_logic',methods=['POST','GET'])
 def bidding_logic():
     if request.method == 'POST':
-        top_bids = {}
+        
+        read_top_bids = open('top_bids.pickle','rb')
+        top_bids = pickle.load(read_top_bids)
+        read_top_bids.close()
+
         top_bids[session['username']] = request.form['business-bid-amount']
         top_bids_reversed = {v:k for k,v in top_bids.items() }
         top_bids_sorted = {key:top_bids_reversed[key] for key in sorted(top_bids_reversed.keys())}
-        top_bids_sorted = {k:v for k,v in top_bids.items()}
-        db.hmset('bidding_logic',top_bids_sorted)
-        top_bids = db.hgetall('bidding_logic')
-        print(top_bids)
+        top_bids= {k:v for k,v in top_bids.items()}
+        
+        write_top_bids = open('top_bids.pickle','wb')
+        pickle.dump(top_bids,write_top_bids)
+        write_top_bids.close()
+
         flights = mongo.db.flights
         airlines = mongo.db.airlines
         confirmed_info = mongo.db.confirmed_tickets
