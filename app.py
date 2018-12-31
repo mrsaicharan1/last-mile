@@ -28,6 +28,10 @@ def index():
 
 @app.route('/signup',methods=['POST','GET'])
 def signup():
+    """ Registers the user onto the portal.
+        OAuth2(future)
+
+    """
      # store hashed password and credentials for POST request
     if request.method == 'POST': # if data is being POSTed
         users = mongo.db.users
