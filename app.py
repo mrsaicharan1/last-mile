@@ -10,7 +10,8 @@ from logging import Formatter, FileHandler
 from forms import *
 import os
 from models import *
-
+import redis    
+import operator
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -18,6 +19,9 @@ from models import *
 app = Flask(__name__)
 app.config.from_object('config')
 sorted_bids={}
+db = redis.Redis('localhost')
+top_bids = {}
+
 @app.route('/index')
 def index():
     pass
@@ -80,6 +84,8 @@ def about():
 
 @app.route('/get_flight_details',methods=['POST','GET'])
 def get_flight_details():
+    if not session['username']:
+        return redirect(url_for('signin'))
     if request.method == 'POST':
         session['reference'] = request.form['reference']
         flights = mongo.db.flights
@@ -92,16 +98,42 @@ def get_flight_details():
                 print(confirmed['reference'])
                 flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
                 print(flight_to_bid)
-                return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid)
-    else:   
-        return render_template('forms/details.html')
+                top_bids = db.hgetall('bidding_logic')
+                return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid,top_bids=top_bids)
+            else:
+                flash('Could not find a booking pertaining to the entered reference number')
+                return redirect(url_for('get_flight_details'))  
+    return render_template('forms/details.html')
         # if request.form['reference'][0:2] =='EK':
         #     flight_to_bid=flights.find_one({'airline':'Emirates'})
         #     return redirect(url_for('bidding',flight_to_bid=flight_to_bid))
 
-@app.route('/bid_amount')
-def bid_amount():
-    pass
+@app.route('/bidding_logic',methods=['POST','GET'])
+def bidding_logic():
+    if request.method == 'POST':
+        top_bids = {}
+        top_bids[session['username']] = request.form['business-bid-amount']
+        top_bids_reversed = {v:k for k,v in top_bids.items() }
+        top_bids_sorted = {key:top_bids_reversed[key] for key in sorted(top_bids_reversed.keys())}
+        top_bids_sorted = {k:v for k,v in top_bids.items()}
+        db.hmset('bidding_logic',top_bids_sorted)
+        top_bids = db.hgetall('bidding_logic')
+        print(top_bids)
+        flights = mongo.db.flights
+        airlines = mongo.db.airlines
+        confirmed_info = mongo.db.confirmed_tickets
+        for confirmed in confirmed_info.find():
+            if session['reference'] == confirmed['reference']:
+                print(session['reference'])
+                print(confirmed['reference'])
+                flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
+                print(flight_to_bid)
+                return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid,top_bids=top_bids)
+    
+
+
+
+
 
     
 # Error handlers.
@@ -125,6 +157,10 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info('errors')
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
 #----------------------------------------------------------------------------#
 # Launch.
 #----------------------------------------------------------------------------#
