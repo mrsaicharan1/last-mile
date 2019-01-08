@@ -7,12 +7,13 @@ import bcrypt
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from forms import *
 import os
 from models import *
-import redis    
+import redis
 import operator
 import pickle
+import datetime
+from helpers import *
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -59,7 +60,9 @@ def signup():
 
 @app.route('/signin',methods=['POST','GET'])
 def signin():
-     # check if hashes match and set session variables
+    """ Logs the user into the portal.
+        OAuth2(future)
+    """
     if request.method == 'POST':
         users = mongo.db.users
         user = users.find_one({'username':request.form['username']})
@@ -88,27 +91,37 @@ def about():
 
 @app.route('/get_flight_details',methods=['POST','GET'])
 def get_flight_details():
+    """ Obtain flight details with reference number.
+        Also pulls up the live biddings.
+    """
     if not session['username']:
         return redirect(url_for('signin'))
     if request.method == 'POST':
         session['reference'] = request.form['reference']
+        print(request.form['reference'])
         flights = mongo.db.flights
         airlines = mongo.db.airlines
         confirmed_info = mongo.db.confirmed_tickets
         for confirmed in confirmed_info.find():
             print(confirmed['reference'])
-            if request.form['reference'] == confirmed['reference']:
+            if session['reference'] == confirmed['reference']:
                 print(request.form['reference'])
                 print(confirmed['reference'])
                 flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
                 print(flight_to_bid)
-                read_top_bids = open('top_bids.pickle','rb')
+                session['flight_id'] = flight_to_bid['flight_id']
+
+                pickle_file_name = session['flight_id']+'.pickle'
+                if not pickle_file_name:
+                    create_pickle(session['flight_id'])
+
+
+                read_top_bids = open(pickle_file_name,'rb')
                 top_bids = pickle.load(read_top_bids)
                 read_top_bids.close()
                 return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid,top_bids=top_bids)
-            else:
-                flash('Could not find a booking pertaining to the entered reference number')
-                return redirect(url_for('get_flight_details'))  
+        flash('Could not find a booking pertaining to the entered reference number')
+        return redirect(url_for('get_flight_details'))
     return render_template('forms/details.html')
         # if request.form['reference'][0:2] =='EK':
         #     flight_to_bid=flights.find_one({'airline':'Emirates'})
@@ -116,18 +129,24 @@ def get_flight_details():
 
 @app.route('/bidding_logic',methods=['POST','GET'])
 def bidding_logic():
+    """
+    Sorting the top_bids every time a new bid pops up
+    """
     if request.method == 'POST':
-        
-        read_top_bids = open('top_bids.pickle','rb')
+
+        read_top_bids = open(session['flight_id']+'.pickle','rb')
         top_bids = pickle.load(read_top_bids)
         read_top_bids.close()
 
         top_bids[session['username']] = request.form['business-bid-amount']
         top_bids_reversed = {v:k for k,v in top_bids.items() }
-        top_bids_sorted = {key:top_bids_reversed[key] for key in sorted(top_bids_reversed.keys())}
-        top_bids= {k:v for k,v in top_bids.items()}
-        
-        write_top_bids = open('top_bids.pickle','wb')
+        print(top_bids_reversed)
+        top_bids_sorted = {key:top_bids_reversed[key] for key in sorted(top_bids_reversed.keys(),reverse=True)}
+        print(top_bids_sorted)
+        top_bids= {v:k for k,v in top_bids_sorted.items()}
+        print(top_bids)
+
+        write_top_bids = open(session['flight_id']+'.pickle','wb')
         pickle.dump(top_bids,write_top_bids)
         write_top_bids.close()
 
@@ -141,13 +160,13 @@ def bidding_logic():
                 flight_to_bid = flights.find_one({'flight_id':confirmed['linked_flight']})
                 print(flight_to_bid)
                 return render_template('forms/bidding_page.html',flight_to_bid = flight_to_bid,top_bids=top_bids)
-    
 
 
 
 
 
-    
+
+
 # Error handlers.
 @app.errorhandler(500)
 def internal_error(error):
@@ -171,6 +190,7 @@ if not app.debug:
 
 @app.route('/logout')
 def logout():
+    "Logging out by clearing sessions"
     session.clear()
     return redirect(url_for('home'))
 #----------------------------------------------------------------------------#

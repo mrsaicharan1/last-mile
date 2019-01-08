@@ -1,88 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <!-- Required meta tags-->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="keywords" content="">
+	<title>Login V1</title>
 
-    <!-- Title Page-->
-    <title>Flight Reference</title>
+	<a href="{{ url_for('logout' )}}">logout</a>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+	<link rel="icon" type="image/png" href="images/icons/favicon.ico"/>
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/vendor/details/vendor/bootstrap/css/bootstrap.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/fonts/details/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/vendor/details/vendor/animate/animate.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/vendor/details/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/vendor/details/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="static/css/details/css/util.css">
+	<link rel="stylesheet" type="text/css" href="static/css/details/css/main.css">
+<!--===============================================================================================-->
 
-    <!-- Icons font CSS-->
-    <link href="static/vendor/auth/mdi-font/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
-    <link href="static/vendor/auth/font-awesome-4.7/css/font-awesome.min.css" rel="stylesheet" media="all">
-    <!-- Font special for pages-->
-    <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-
-    <!-- Vendor CSS-->
-    <link href=static/vendor/auth/select2/select2.min.css" rel="stylesheet" media="all">
-    <link href="static/vendor/auth/datepicker/daterangepicker.css" rel="stylesheet" media="all">
-
-    <!-- Main CSS-->
-    <link href="static/css/auth/main.css" rel="stylesheet" media="all">
 </head>
 
 <body>
-        Logged in as {{ session['username'] }}	
-        <a href="{{ url_for('logout') }}">Log out</button>
 
-    			<!-- flash -->
-			<div class="container-fluid" style="min-height:100%">
-                    {% with messages = get_flashed_messages() %}
-                      {% if messages %}
-                        {% for message in messages %}
-                        <div class="alert alert-warning alert-dismissible" role="alert">
-                          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                          {{ message }}
-                        </div>
-                        {% endfor %}
-                      {% endif %}
-                    {% endwith %}
-                  </div>
-                  <!--//flash-->
-    <div class="page-wrapper bg-gra-01 p-t-180 p-b-100 font-poppins">
-        <div class="wrapper wrapper--w780">
-            <div class="card card-3">
-                <div class="card-heading"></div>
-                <div class="card-body">
-                    <h2 class="title">Registration Info</h2>
-                    <form action="{{ url_for('get_flight_details') }}" method="POST">
-                        <div class="input-group">
-                            <input class="input--style-3" type="text" placeholder="Name" name="name">
-                        </div>
-                        <div class="input-group">
-                                <input class="input--style-3" type="text" placeholder="Booking reference" name="reference">
-                            </div>
-                        <div class="input-group">
-                            <input class="input--style-3 js-datepicker" type="text" placeholder="Birthdate" name="birthday">
-                            <i class="zmdi zmdi-calendar-note input-icon js-btn-calendar"></i>
-                        </div>
-                        <div class="p-t-10">
-                            <button class="btn btn--pill btn--green" type="submit">Submit</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="limiter">
+		<div class="container-login100">
+			<div class="wrap-login100">
+				<div class="login100-pic js-tilt" data-tilt>
+					<img src="static/img/flight.png" alt="IMG">
+				</div>
 
-    <!-- Jquery JS-->
-    <script src="vendor/auth/jquery/jquery.min.js"></script>
-    <!-- Vendor JS-->
-    <script src="vendor/auth/select2/select2.min.js"></script>
-    <script src="vendor/auth/datepicker/moment.min.js"></script>
-    <script src="vendor/auth/datepicker/daterangepicker.js"></script>
+				<form class="login100-form validate-form" action="{{url_for('get_flight_details')}}" method='POST'>
+					<span class="login100-form-title">
+						Member Login
+					</span>
 
-    <!-- Main JS-->
-    <script src="js/auth/global.js"></script>
+					<div class="wrap-input100 validate-input" data-validate = "Name is required">
+						<input class="input100" type="text" name="name" placeholder="Name">
+						<span class="focus-input100"></span>
+						<span class="symbol-input100">
+							<i class="fa fa-user-circle" aria-hidden="true"></i>
+						</span>
+					</div>
 
-</body><!-- This templates was made by  (https://.com) -->
+					<div class="wrap-input100 validate-input" data-validate = "Password is required">
+						<input class="input100" type="text" name="reference" placeholder="reference number">
+						<span class="focus-input100"></span>
+						<span class="symbol-input100">
+							<i class="fa fa-hashtag" aria-hidden="true"></i>
+						</span>
+					</div>
+                    <input  type="submit">
 
+				</form>
+			</div>
+		</div>
+	</div>
+
+
+
+
+<!--===============================================================================================-->
+	<script src="static/vendor/details/vendor/jquery/jquery-3.2.1.min.js"></script>
+<!--===============================================================================================-->
+	<script src="static/vendor/details/vendor/bootstrap/js/popper.js"></script>
+	<script src="static/vendor/details/vendor/bootstrap/js/bootstrap.min.js"></script>
+<!--===============================================================================================-->
+	<script src="static/vendor/details/vendor/select2/select2.min.js"></script>
+<!--===============================================================================================-->
+	<script src="static/vendor/details/vendor/tilt/tilt.jquery.min.js"></script>
+	<script >
+		$('.js-tilt').tilt({
+			scale: 1.1
+		})
+	</script>
+<!--===============================================================================================-->
+	<script src="js/details/js/main.js"></script>
+
+</body>
 </html>
-<!-- end document-->
